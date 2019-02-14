@@ -56,6 +56,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32h743xx.h"
 #include "gpio.h"
 #include "croutine.h"
 /* USER CODE END Includes */
@@ -68,6 +69,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define	PRIORITY_0				0
+#define	NUM_COROUTINES			3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -77,6 +79,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+const int iFlashRates[ NUM_COROUTINES ] = { 100, 500, 1000 };
+const int iLEDToFlash[ NUM_COROUTINES ] = { 0, 1, 2 };
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -107,8 +111,8 @@ void vFlashCoRoutine( xCoRoutineHandle xHandle, unsigned portBASE_TYPE uxIndex)
 	crSTART( xHandle );
 	for( ;; )
 	{
-		crDELAY( xHandle, 10 );
-		HAL_GPIO_TogglePin( LED1_GPIO_Port, LED1_Pin );
+		crDELAY( xHandle, iFlashRates[uxIndex] );
+		test_Toggle_LED( iLEDToFlash[uxIndex] );
 	}
 	crEND();
 }
@@ -121,7 +125,7 @@ void vFlashCoRoutine( xCoRoutineHandle xHandle, unsigned portBASE_TYPE uxIndex)
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+	uint8_t	i;
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -143,7 +147,10 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xCoRoutineCreate( vFlashCoRoutine, PRIORITY_0, 0 );
+  for( i = 0; i < NUM_COROUTINES; i++ )
+  {
+  	xCoRoutineCreate( vFlashCoRoutine, PRIORITY_0, i );
+  }
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
